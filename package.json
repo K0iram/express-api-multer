@@ -9,6 +9,7 @@
     "node": "4.6.2"
   },
   "dependencies": {
+    "aws-sdk": "^2.22.0",
     "bcrypt": "^0.8.7",
     "body-parser": "^1.15.2",
     "cors": "^2.8.1",
