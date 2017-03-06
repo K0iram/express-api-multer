@@ -8,6 +8,7 @@ const fs = require('fs');
 
 const mime = require('mime');
 const path = require('path');
+const crypto = require('crypto');
 
 let file = {
   path: process.argv[2],
@@ -16,19 +17,43 @@ let file = {
 
 let mimeType = mime.lookup(file.path);
 let ext = path.extname(file.path);
+let folder = (new Date()).toISOString().split('T')[0];
 
 let stream = fs.createReadStream(file.path);
 
-console.log("stream is " , stream);
+new Promise ((res, rej)=>{
+  crypto.randomBytes(16, (err, buf)=>{
+    if(err){
+      rej(err);
+    }
+    else {
+      console.log("buffer is ", buf);
+      console.log("buffer.toS is ", buf.toString('hex'));
 
-let params = {
-  ACL: 'public-read',
-  Bucket: process.env.AWS_S3_BUCKET_NAME,
-  Key: `${file.title}${ext}`,
-  Body: stream,
-  ContentType: mimeType
-};
+      res(buf.toString('hex'));
+    }
+  });
+}).then((filename)=>{
+  let params = {
+    ACL: 'public-read',
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Key: `${folder}/${filename}${ext}`,
+    Body: stream,
+    ContentType: mimeType
+  };
 
-s3.upload(params, function (err, data){
-  console.log(err, data);
-});
+  return new Promise((res, rej) =>{
+    s3.upload(params, function (err, data){
+      if(err){
+        console.log(err);
+        rej(err);
+      }
+      else {
+        console.log(data);
+        res(data);
+      }
+    });
+  });
+})
+.then(console.log)
+.catch(console.error);
